@@ -5,17 +5,19 @@ from typing import Optional, TypeVar, Callable, Dict
 from requests.auth import HTTPBasicAuth
 
 @dataclass(frozen=True)
+class JenkinsQueueItem:
+  url: str
+  buildable: bool
+  id: int
+  reason: str
+
+@dataclass(frozen=True)
 class JenkinsJob:
   url: str
   buildable: bool
   next_build_number: int
   in_queue: bool
-
-@dataclass(frozen=True)
-class JenkinsQueueItem:
-  url: str
-  buildable: bool
-  next_build_number: int
+  queue_item: Optional[JenkinsQueueItem]
 
 @dataclass
 class RestClient:
@@ -30,7 +32,13 @@ class RestClient:
         url=json["url"],
         buildable=json["buildable"],
         next_build_number=json["nextBuildNumber"],
-        in_queue=json["inQueue"] # face
+        in_queue=json["inQueue"]
+        queue_item=None if not json["inQueue"] else JenkinsQueueItem(
+          url=json["queueItem"]["url"]
+          buildable=json["queueItem"]["buildable"]
+          id=json["queueItem"]["id"]
+          reason=json["queueItem"]["why"]
+        )
       )
     )
 
