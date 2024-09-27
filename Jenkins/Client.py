@@ -69,8 +69,10 @@ class RestClient:
   def __apiCall(self, path: str, transform: Callable[[Dict],A]) -> Optional[A]:
     url = f"{self.base_url}{path}/api/json"
     response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
+    if response.status_code == 404:
+      return None
     if response.status_code == 200:
       return transform( response.json() )
-    else:
-      print(f"Failed to make REST call to {url}. Status code: {response.status_code}")
-      return None
+    
+    print(f"Failed to make REST call to {url}. Status code: {response.status_code}")
+    return None
