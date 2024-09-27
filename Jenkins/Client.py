@@ -29,7 +29,7 @@ class RestClient:
         url=json["url"],
         buildable=json["buildable"],
         next_build_number=json["nextBuildNumber"],
-        in_queue=json[inQueue]
+        in_queue=json["inQueue"]
       )
     )
 
