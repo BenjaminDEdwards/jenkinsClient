@@ -9,6 +9,7 @@ class JenkinsJob:
   url: str
   buildable: bool
   next_build_number: int
+  in_queue: bool
 
 @dataclass(frozen=True)
 class JenkinsQueueItem:
