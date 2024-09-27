@@ -32,7 +32,7 @@ class RestClient:
         url=json["url"],
         buildable=json["buildable"],
         next_build_number=json["nextBuildNumber"],
-        in_queue=json["inQueue"]
+        in_queue=json["inQueue"],
         queue_item=None if not json["inQueue"] else JenkinsQueueItem(
           url=json["queueItem"]["url"]
           buildable=json["queueItem"]["buildable"]
