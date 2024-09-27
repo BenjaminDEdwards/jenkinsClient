@@ -43,19 +43,6 @@ class RestClient:
       )
     )
 
-    url = f"{self.base_url}/queue/item/{queue_id}/api/json"
-    response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
-    if response.status_code == 200:
-      return JenkinsQueueItem(
-        url=response.json()["url"],
-        buildable=response.json()["buildable"],
-        next_build_number=response.json()["nextBuildNumber"],
-        in_queue=response.json()["inQueue"]
-      )
-    else:
-      print(f"Failed to get Jenkins queue item {queue_id}. Status code: {response.status_code}")
-      return None
-
   A = TypeVar("A")
   def __apiCall(self, path: str, transform: Callable[[Dict],A]) -> Optional[A]:
     url = f"{self.base_url}{path}/api/json"
