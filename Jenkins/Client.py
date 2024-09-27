@@ -25,6 +25,7 @@ class RestClient:
   password: str
   base_url: str
 
+  # foo
   def getJenkinsJob(self, job_name: str) -> Optional[JenkinsJob]:
     return self.__apiCall(
       f"/job/{job_name}",
@@ -40,6 +41,7 @@ class RestClient:
         )
       )
     )
+
 
 
   def getQueueItem(self, queue_id: int) -> Optional[JenkinsQueueItem]:
