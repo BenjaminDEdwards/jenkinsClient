@@ -25,18 +25,42 @@ class JenkinsJob:
   in_queue: bool
   queue_item: Optional[JenkinsQueueItem]
 
+@dataclass(frozen=True)
+class JenkinsBuild:
+  url: str
+  number: int
+  in_progress: bool
+  building: bool
+  display_name: Optional[str]
+  full_display_name: Optional[str]
+  result: Optional[str]
+
 @dataclass
 class RestClient:
   username: str
   password: str
   base_url: str
 
-  def createJenkinsJob(self, job_name: str) -> Optional[str]:
+  def buildWithParameters(self, job_name: str) -> Optional[str]:
     url = f"{self.base_url}/job/{job_name}/buildWithParameters"
     response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
     if ( response.status_code == 404 ):
       return None
     return response.headers.get('location', None)
+
+  def getJenkinsBuild(self, job_name: str, build_numer: int):
+    return self.__apiCall(
+      f"/job/{job_name}/{build_number}",
+      lambda json: JenkinsBuild(
+        url = json["url"],
+        number = json["number"],
+        in_progress = json["inProgress"],
+        building = json["building"],
+        display_name = json["displayName"],
+        result = json.get("result"),
+        full_display_name = json.get("fullDisplayName")
+      )
+    )
 
   # foo
   def getJenkinsJob(self, job_name: str) -> Optional[JenkinsJob]:
@@ -79,6 +103,9 @@ class RestClient:
       return None
     if response.status_code == 200:
       return transform( response.json() )
-    
+   
     print(f"Failed to make REST call to {url}. Status code: {response.status_code}")
     return None
+
+
+    
