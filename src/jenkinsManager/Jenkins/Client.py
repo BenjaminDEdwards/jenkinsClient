@@ -31,6 +31,13 @@ class RestClient:
   password: str
   base_url: str
 
+  def createJenkinsJob(self, job_name: str) -> Optional[str]:
+    url = f"{self.base_url}/job/{job_name}/buildWithParameters"
+    response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
+    if ( response.status_code == 404 ):
+      return None
+    return response.headers.get('location', None)
+
   # foo
   def getJenkinsJob(self, job_name: str) -> Optional[JenkinsJob]:
     return self.__apiCall(
@@ -49,8 +56,6 @@ class RestClient:
       )
     )
 
-
-
   def getQueueItem(self, queue_id: int) -> Optional[JenkinsQueueItem]:
     return self.__apiCall(
       f"/queue/item/{queue_id}",
@@ -64,6 +69,7 @@ class RestClient:
         )
       )
     )
+
 
   A = TypeVar("A")
   def __apiCall(self, path: str, transform: Callable[[Dict],A]) -> Optional[A]:
