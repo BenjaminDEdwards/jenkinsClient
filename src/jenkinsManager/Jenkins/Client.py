@@ -201,7 +201,7 @@ class RestClient:
           job_state = JobState.CANCELLED
           break
         if ( item.executable ):
-          print(f"Item has become executable. {item.executable.url}")
+          print(f"Job is now running. {item.executable.url}")
           job_number = item.executable.number
           job_state = JobState.BUILDING
         continue
