@@ -14,7 +14,7 @@ class JenkinsQueueExecutable:
 @dataclass(frozen=True)
 class JenkinsQueueItem:
   url: str
-  buildable: bool
+  buildable: Optional[bool]
   id: int
   reason: Optional[str]
   executable: Optional[JenkinsQueueExecutable] = None
@@ -48,7 +48,7 @@ class RestClient:
   base_url: str
   log_info: Callable[[str], None] = lambda log_line: print(f"{log_line}")
 
-  max_retrries = 5
+  max_retries = 5
   timeout = 5
 
   def buildWithParameters(self, job_name: str) -> Optional[str]:
@@ -56,7 +56,8 @@ class RestClient:
     response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
     if ( response.status_code == 404 ):
       return None
-    return response.headers.get('location', None)
+    return JenkinsQueueItem(
+      response.headers.get('location', None)
 
   def getJobBuild(self, job_name: str, build_number: int):
     return self.__apiCall(
@@ -129,10 +130,10 @@ class RestClient:
       return queueItem
 
     remaining_tries = self.max_retries
-    while (queued == None and remaining_retries > 0):
+    while (queueItem == None and remaining_tries > 0):
 
-      self.log_info(f"kicking off build for {job_name} ( {remaining_retries} attempts remaining ) ")
-      remaining_retries -= 1
+      self.log_info(f"kicking off build for {job_name} ( {remaining_tries} attempts remaining ) ")
+      remaining_tries -= 1
       jenkinsBuild = self.getJob(job_name)
       queueItem = jenkinsBuild.queueItem
       time.sleep(self.timeout)
