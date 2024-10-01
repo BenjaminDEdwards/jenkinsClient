@@ -77,6 +77,7 @@ class RestClient:
   max_retries = 5
   timeout = 5
   refresh_interval_seconds = 30
+  build_run_timeout_seconds = 300
 
   def buildWithParameters(self, job_name: str) -> Optional[str]:
     url = f"{self.base_url}/job/{job_name}/buildWithParameters"
@@ -236,14 +237,14 @@ class RestClient:
   def runJob(self, job_name: str) -> JobState:
     # Set up the timeout
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(300)  # Set the timeout for 5 minutees (600 seconds)
+    signal.alarm(self.build_run_timeout_seconds )  # Set the timeout for 5 minutees (600 seconds)
 
     try:
       # Call the private method with the original logic
       return self._runJobInternal(job_name)
     
     except TimeoutException:
-      self.log_info("Job execution timed out after 300 seconds")
+      self.log_info("Job execution timed out after {self.build_run_timeout_seconds} seconds")
       return JobState.TIMED_OUT
     finally:
       # Cancel the alarm if the job finishes before timeout
