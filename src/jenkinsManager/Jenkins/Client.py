@@ -137,22 +137,24 @@ class RestClient:
 
 
   def queueBuild( self, job_name:str ) -> Optional[JenkinsQueueItem]:
-    
-    
     jenkinsBuild = self.getJob(job_name)
-
     queueItem: Optional[JenkinsQueueItem] = jenkinsBuild.queue_item
-
     if (queueItem):
+      self.log_info("Using existing queue item")
       return queueItem
 
     remaining_tries = self.max_retries
     while (queueItem == None and remaining_tries > 0):
-
-      self.log_info(f"kicking off build for {job_name} ( {remaining_tries} attempts remaining ) ")
+      self.log_info(f"kicking off build for {job_name}")
       remaining_tries -= 1
+      queueItem = self.buildWithParameters(job_name)
+      if (queueItem):
+        break
       jenkinsBuild = self.getJob(job_name)
       queueItem = jenkinsBuild.queue_item
+      if (queueItem):
+        break
+      self.log_info("Could not kick off a new build, will retry ( {remaining_tries} attempts remaining )")
       time.sleep(self.timeout)
     
     return queueItem
