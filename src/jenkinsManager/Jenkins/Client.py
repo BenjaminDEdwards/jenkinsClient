@@ -32,14 +32,22 @@ class JenkinsJob:
 class BuildResult(Enum):
   SUCCESS = "SUCCESS"
   FAILURE = "FAILURE"
+  ABORTED = "ABORTED"
+
+@dataclass(frozen=True)
+class State:
+  value: str
+  terminal: bool
+  success: bool = False
+
 
 class JobState(Enum):
-  QUEUED = "QUEUED"
-  BUILDING = "BUILDING"
-  COMPLETED = "COMPLETED"
-  FAILED = "FAILED"
-  CANCELLED = "CANCELLED"
-  UNKNOWN = "UNKNOWN"
+  QUEUED = State( "QUEUED", False )
+  BUILDING = State( "BUILDING", False )
+  COMPLETED = State( "COMPLETED", True, True )
+  FAILED = State( "FAILED", True, False )
+  CANCELLED = State( "CANCELLED", True, False )
+  UNKNOWN = State( "UNKNOWN", True, False )
 
 
 @dataclass(frozen=True)
@@ -201,12 +209,19 @@ class RestClient:
         build = self.getJobBuild(job_name, job_number)
         if ( build.result ):
           if ( build.result == BuildResult.SUCCESS ):
-            self.log_info(f"Job {build.display_name} reports completed")
+            self.log_info(f"Job {build.display_name} has completed")
             job_state = JobState.COMPLETED
+          elif ( build.result == BuildResult.FAILURE ):
+            self.log_info(f"Job {build.display_name} has failed")
+            job_state = JobState.FAILED
+          elif ( build.result == BuildResult.ABORTED ):
+            self.log_info(f"Job {build.display_name} has been aborted")
+            job_state = JobState.CANCELLED
           else:
+            self.log_info(f"Job {build.display_name} has an unknown state: {build.result}")
             job_state = JobState.UNKNOWN
           break
-        self.log_info(f"Job {build.display_name} is in progress")
+        self.log_info(f"Job {build.display_name} is still in progress")
         continue
     
     return job_state
