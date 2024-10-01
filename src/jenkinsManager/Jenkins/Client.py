@@ -127,7 +127,7 @@ class RestClient:
           number = json["executable"]["number"],
           url = json["executable"]["url"]
         ),
-        reason = json.get("why")
+        reason = json.get("why"),
         cancelled = json.get("cancelled")
       )
     )
