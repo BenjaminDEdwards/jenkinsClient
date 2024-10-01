@@ -73,11 +73,11 @@ class RestClient:
   password: str
   base_url: str
   log_info: Callable[[str], None] = lambda log_line: print(f"{log_line}")
-
-  max_retries = 5
-  timeout = 5
-  refresh_interval_seconds = 30
-  build_run_timeout_seconds = 300
+  max_retries: int = 5
+  timeout: int = 5
+  refresh_interval_seconds: int = 30
+  build_run_timeout_seconds: int = 300 # 5 minutes
+  http_timeout_seconds: int = 10
 
   def buildWithParameters(self, job_name: str) -> Optional[str]:
     url = f"{self.base_url}/job/{job_name}/buildWithParameters"
@@ -155,13 +155,19 @@ class RestClient:
   A = TypeVar("A")
   def __apiCall(self, path: str, transform: Callable[[Dict],A]) -> Optional[A]:
     url = f"{self.base_url}{path}/api/json"
-    response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
-    if response.status_code == 404:
+    try:
+      response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password), timeout=self.http_timeout_seconds)
+      if response.status_code == 404:
+        return None
+      if response.status_code == 200:
+        return transform( response.json() )
+
+      self.log_info(f"Failed to make REST call to {url}. Status code: {response.status_code}")
+    except requests.Timeout:
+      # Handle the case where the request times out
+      self.log_info(f"Request to {url} timed out after {self.http_timeout_seconds} seconds")
       return None
-    if response.status_code == 200:
-      return transform( response.json() )
-   
-    self.log_info(f"Failed to make REST call to {url}. Status code: {response.status_code}")
+
     return None
 
 
@@ -185,7 +191,7 @@ class RestClient:
         break
       self.log_info("Could not kick off a new build, will retry ( {remaining_tries} attempts remaining )")
       time.sleep(self.timeout)
-    
+
     return queueItem
 
   def _runJobInternal(self, job_name: str) -> JobState:
@@ -203,13 +209,13 @@ class RestClient:
       time.sleep(self.refresh_interval_seconds)
       if ( job_state == JobState.QUEUED ):
         item = self.getQueueItem(queue_id)
-        self.log_info(f"Item is queued {item.reason}")
+        self.log_info(f"Build is queued {item.reason}")
         if ( item.cancelled ):
-          self.log_info("Queued item has been cancelled")
+          self.log_info("Queued build has been cancelled")
           job_state = JobState.CANCELLED
           break
         if ( item.executable ):
-          self.log_info(f"Job is now running. {item.executable.url}")
+          self.log_info(f"Build is in progress: {item.executable.url}")
           job_number = item.executable.number
           job_state = JobState.BUILDING
         continue
