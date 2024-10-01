@@ -1,3 +1,4 @@
+import re
 import requests
 from dataclasses import dataclass
 from typing import Optional, TypeVar, Callable, Dict
@@ -53,21 +54,21 @@ class RestClient:
 
   def buildWithParameters(self, job_name: str) -> Optional[str]:
     url = f"{self.base_url}/job/{job_name}/buildWithParameters"
-    response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
+    response = requests.post(url, auth=HTTPBasicAuth(self.username, self.password))
     if ( response.status_code == 404 ):
       return None
     queue_url = response.headers.get('location', None)
     if not queue_url:
       return None
     
-    queue_id = __queueItemFromUrl(queue_url)
+    queue_id = self.__queueItemFromUrl(queue_url)
     if not queue_id:
       return None
 
     return self.getQueueItem(queue_id)
 
 
-  def __queueItemFromUrl(input: str ) -> Optional[int]:
+  def __queueItemFromUrl(self, input: str ) -> Optional[int]:
     pattern = r"/queue/item/(\d+)"
     match = re.search(pattern,input)
     if match:
