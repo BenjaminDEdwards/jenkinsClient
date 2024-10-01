@@ -114,10 +114,11 @@ class RestClient:
         url = json["url"],
         buildable = json["buildable"],
         id = json["id"],
-        queue_item = None if not json["executable"] else JenkinsQueueExecutable(
+        executable = None if not json.get()"executable") else JenkinsQueueExecutable(
           number = json["executable"]["number"],
           url = json["executable"]["url"]
-        )
+        ),
+        reason = json.get("why")
       )
     )
 
