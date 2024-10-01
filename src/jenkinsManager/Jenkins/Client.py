@@ -123,10 +123,20 @@ class RestClient:
     
     jenkinsBuild = self.getJob(job_name)
 
-    queueItem = jenkinsBuild.queue_item
+    queueItem: Optional[JenkinsQueueItem] = jenkinsBuild.queue_item
 
     if (queueItem):
       return queueItem
 
+    remaining_tries = self.max_retries
+    while (queued == None and remaining_retries > 0):
 
-    self.log_info(f"kicking off build for {job_name}")
+      self.log_info(f"kicking off build for {job_name} ( {remaining_retries} attempts remaining ) ")
+      remaining_retries -= 1
+      jenkinsBuild = self.getJob(job_name)
+      queueItem = jenkinsBuild.queueItem
+      time.sleep(self.timeout)
+    
+    return queueItem
+
+
