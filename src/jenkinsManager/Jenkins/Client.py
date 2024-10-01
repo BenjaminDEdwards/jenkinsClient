@@ -48,7 +48,7 @@ class RestClient:
       return None
     return response.headers.get('location', None)
 
-  def getJenkinsBuild(self, job_name: str, build_numer: int):
+  def getJobBuild(self, job_name: str, build_numer: int):
     return self.__apiCall(
       f"/job/{job_name}/{build_number}",
       lambda json: JenkinsBuild(
