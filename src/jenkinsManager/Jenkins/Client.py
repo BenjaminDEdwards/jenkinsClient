@@ -201,7 +201,7 @@ class RestClient:
           job_state = JobState.CANCELLED
           break
         if ( item.executable ):
-          print(f"Job is now running. {item.executable.url}")
+          self.log_info(f"Job is now running. {item.executable.url}")
           job_number = item.executable.number
           job_state = JobState.BUILDING
         continue
@@ -209,19 +209,19 @@ class RestClient:
         build = self.getJobBuild(job_name, job_number)
         if ( build.result ):
           if ( build.result == BuildResult.SUCCESS ):
-            self.log_info(f"Job {build.display_name} has completed")
+            self.log_info(f"Build {build.display_name} has completed")
             job_state = JobState.COMPLETED
           elif ( build.result == BuildResult.FAILURE ):
-            self.log_info(f"Job {build.display_name} has failed")
+            self.log_info(f"Build {build.display_name} has failed")
             job_state = JobState.FAILED
           elif ( build.result == BuildResult.ABORTED ):
-            self.log_info(f"Job {build.display_name} has been aborted")
+            self.log_info(f"Build {build.display_name} has been aborted")
             job_state = JobState.CANCELLED
           else:
-            self.log_info(f"Job {build.display_name} has an unknown state: {build.result}")
+            self.log_info(f"Build {build.display_name} has an unknown state: {build.result}")
             job_state = JobState.UNKNOWN
           break
-        self.log_info(f"Job {build.display_name} is still in progress")
+        self.log_info(f"Build {build.display_name} is in progress")
         continue
     
     return job_state
