@@ -2,6 +2,7 @@ import requests
 from dataclasses import dataclass
 from typing import Optional, TypeVar, Callable, Dict
 from enum import Enum
+import time
 
 from requests.auth import HTTPBasicAuth
 
@@ -47,6 +48,9 @@ class RestClient:
   base_url: str
   log_info: Callable[[str], None] = lambda log_line: print(f"{log_line}")
 
+  max_retrries = 5
+  timeout = 5
+
   def buildWithParameters(self, job_name: str) -> Optional[str]:
     url = f"{self.base_url}/job/{job_name}/buildWithParameters"
     response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
@@ -69,7 +73,7 @@ class RestClient:
     )
 
   # foo
-  def getJenkinsJob(self, job_name: str) -> Optional[JenkinsJob]:
+  def getJob(self, job_name: str) -> Optional[JenkinsJob]:
     return self.__apiCall(
       f"/job/{job_name}",
       lambda json: JenkinsJob(
@@ -114,5 +118,15 @@ class RestClient:
     return None
 
 
-  def build( self, job_name:str ) -> None:
-    self.log_info(f"Running build for job {job_name}")
+  def queueBuild( self, job_name:str ) -> Optional[JenkinsQueueItem]:
+    
+    
+    jenkinsBuild = self.getJob(job_name)
+
+    queueItem = jenkinsBuild.queue_item
+
+    if (queueItem):
+      return queueItem
+
+
+    self.log_info(f"kicking off build for {job_name}")
