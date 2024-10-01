@@ -56,8 +56,7 @@ class RestClient:
     response = requests.get(url, auth=HTTPBasicAuth(self.username, self.password))
     if ( response.status_code == 404 ):
       return None
-    return JenkinsQueueItem(
-      response.headers.get('location', None)
+    return response.headers.get('location', None)
 
   def getJobBuild(self, job_name: str, build_number: int):
     return self.__apiCall(
@@ -120,8 +119,8 @@ class RestClient:
 
 
   def queueBuild( self, job_name:str ) -> Optional[JenkinsQueueItem]:
-    
-    
+
+
     jenkinsBuild = self.getJob(job_name)
 
     queueItem: Optional[JenkinsQueueItem] = jenkinsBuild.queue_item
