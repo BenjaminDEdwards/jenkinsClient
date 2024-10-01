@@ -16,6 +16,7 @@ class JenkinsQueueExecutable:
 class JenkinsQueueItem:
   url: str
   buildable: Optional[bool]
+  cancelled: bool
   id: int
   reason: Optional[str]
   executable: Optional[JenkinsQueueExecutable] = None
@@ -31,6 +32,14 @@ class JenkinsJob:
 class BuildResult(Enum):
   SUCCESS = "SUCCESS"
   FAILURE = "FAILURE"
+
+class JobState(Enum):
+  QUEUED = "QUEUED"
+  COMPLETED = "COMPLETED"
+  FAILED = "FAILED"
+  CANCELLED = "CANCELLED"
+  
+
 
 @dataclass(frozen=True)
 class JenkinsBuild:
@@ -119,6 +128,7 @@ class RestClient:
           url = json["executable"]["url"]
         ),
         reason = json.get("why")
+        cancelled = json.get("cancelled")
       )
     )
 
@@ -158,5 +168,24 @@ class RestClient:
       time.sleep(self.timeout)
     
     return queueItem
+
+  def runJob( self, job_name: str ) -> JobState:
+    queued = self.queueBuild(job_name)
+    queue_id = queued.id
+    if not queue_id:
+      return JobState.FAILED
+    
+    job_state = JobState.QUEUED
+    while( job_state == JobState.QUEUED ):
+      self.log_info("Check queue")
+      item = self.getQueueItem(queue_id)
+      if ( item.cancelled ):
+        self.log_info("Queued item cancelled")
+        job_state = JobState.CANCELLED
+        break
+      time.sleep(30)
+    
+    return job_state
+
 
 
