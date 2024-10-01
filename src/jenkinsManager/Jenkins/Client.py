@@ -1,6 +1,7 @@
 import requests
 from dataclasses import dataclass
 from typing import Optional, TypeVar, Callable, Dict
+from enum import Enum
 
 from requests.auth import HTTPBasicAuth
 
@@ -25,6 +26,10 @@ class JenkinsJob:
   in_queue: bool
   queue_item: Optional[JenkinsQueueItem]
 
+class BuildResult(Enum):
+  SUCCESS = "SUCCESS"
+  FAILURE = "FAILURE"
+
 @dataclass(frozen=True)
 class JenkinsBuild:
   url: str
@@ -33,7 +38,7 @@ class JenkinsBuild:
   building: bool
   display_name: Optional[str]
   full_display_name: Optional[str]
-  result: Optional[str]
+  result: Optional[BuildResult]
 
 @dataclass
 class RestClient:
@@ -58,7 +63,7 @@ class RestClient:
         in_progress = json["inProgress"],
         building = json["building"],
         display_name = json["displayName"],
-        result = json.get("result"),
+        result = None if not json.get("result") else BuildResult(json.get("result")),
         full_display_name = json.get("fullDisplayName")
       )
     )
