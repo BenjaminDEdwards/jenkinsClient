@@ -39,7 +39,7 @@ class JobState(Enum):
   COMPLETED = "COMPLETED"
   FAILED = "FAILED"
   CANCELLED = "CANCELLED"
-  
+  UNKNOWN = "UNKNOWN"
 
 
 @dataclass(frozen=True)
@@ -181,24 +181,32 @@ class RestClient:
       return JobState.FAILED
     
     job_state = JobState.QUEUED
+    self.log_info(f"Jenkins job queued at: {new.url} - {new.reason}")
+    self.log_info(f"Polling for updates every {self.refresh_interval_seconds}")
     while( job_state == JobState.QUEUED or job_state == JobState.BUILDING ):
       time.sleep(self.refresh_interval_seconds)
       if ( job_state == JobState.QUEUED ):
-        self.log_info("Check queue")
         item = self.getQueueItem(queue_id)
+        self.log_info(f"Item is queued {item.reason}")
         if ( item.cancelled ):
-          self.log_info("Queued item cancelled")
+          self.log_info("Queued item has been cancelled")
           job_state = JobState.CANCELLED
           break
         if ( item.executable ):
-          print(f"Item has become executable: f{item.executable.url}")
+          print(f"Item has become executable. {item.executable.url}")
           job_number = item.executable.number
           job_state = JobState.BUILDING
         continue
       if ( job_state == JobState.BUILDING ):
-        self.log_info("Job is building")
         build = self.getJobBuild(job_name, job_number)
-        print(build)
+        if ( build.result ):
+          if ( build.result == BuildResult.SUCCESS ):
+            self.log_info(f"Job {build.display_name} reports completed")
+            job_state = JobState.COMPLETED
+          else:
+            job_state = JobState.UNKNOWN
+          break
+        self.log_info(f"Job {build.display_name} is in progress")
         continue
     
     return job_state
