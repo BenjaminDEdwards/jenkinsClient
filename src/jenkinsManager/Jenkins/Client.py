@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, TypeVar, Callable, Dict
 from enum import Enum
 import time
+import signal
 
 from requests.auth import HTTPBasicAuth
 
@@ -37,18 +38,24 @@ class BuildResult(Enum):
 @dataclass(frozen=True)
 class State:
   value: str
-  terminal: bool
   success: bool = False
 
 
 class JobState(Enum):
-  QUEUED = State( "QUEUED", False )
-  BUILDING = State( "BUILDING", False )
-  COMPLETED = State( "COMPLETED", True, True )
-  FAILED = State( "FAILED", True, False )
-  CANCELLED = State( "CANCELLED", True, False )
-  UNKNOWN = State( "UNKNOWN", True, False )
+  QUEUED = State( "QUEUED" )
+  BUILDING = State( "BUILDING")
+  COMPLETED = State( "COMPLETED", True )
+  FAILED = State( "FAILED", False )
+  CANCELLED = State( "CANCELLED", False )
+  TIMED_OUT = State( "TIMED_OUT", False )
+  UNKNOWN = State( "UNKNOWN", False )
 
+
+class TimeoutException(Exception):
+    pass
+
+def timeout_handler(signum, frame):
+    raise TimeoutException()
 
 @dataclass(frozen=True)
 class JenkinsBuild:
@@ -180,7 +187,7 @@ class RestClient:
     
     return queueItem
 
-  def runJob( self, job_name: str ) -> JobState:
+  def _runJobInternal(self, job_name: str) -> JobState:
     new = self.queueBuild(job_name)
     queue_id = new.id
     job_number = 0
@@ -224,7 +231,22 @@ class RestClient:
         self.log_info(f"Build {build.display_name} is in progress")
         continue
     
-    return job_state
+    return job_state.value
 
+  def runJob(self, job_name: str) -> JobState:
+    # Set up the timeout
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(300)  # Set the timeout for 5 minutees (600 seconds)
+
+    try:
+      # Call the private method with the original logic
+      return self._runJobInternal(job_name)
+    
+    except TimeoutException:
+      self.log_info("Job execution timed out after 300 seconds")
+      return JobState.TIMED_OUT
+    finally:
+      # Cancel the alarm if the job finishes before timeout
+      signal.alarm(0)
 
 
