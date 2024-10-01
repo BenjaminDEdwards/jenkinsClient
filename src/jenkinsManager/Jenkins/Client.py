@@ -35,6 +35,7 @@ class BuildResult(Enum):
 
 class JobState(Enum):
   QUEUED = "QUEUED"
+  BUILDING = "BUILDING"
   COMPLETED = "COMPLETED"
   FAILED = "FAILED"
   CANCELLED = "CANCELLED"
@@ -60,6 +61,7 @@ class RestClient:
 
   max_retries = 5
   timeout = 5
+  refresh_interval_seconds = 30
 
   def buildWithParameters(self, job_name: str) -> Optional[str]:
     url = f"{self.base_url}/job/{job_name}/buildWithParameters"
@@ -171,20 +173,33 @@ class RestClient:
     return queueItem
 
   def runJob( self, job_name: str ) -> JobState:
-    queued = self.queueBuild(job_name)
-    queue_id = queued.id
+    new = self.queueBuild(job_name)
+    queue_id = new.id
+    job_number = 0
+
     if not queue_id:
       return JobState.FAILED
     
     job_state = JobState.QUEUED
-    while( job_state == JobState.QUEUED ):
-      self.log_info("Check queue")
-      item = self.getQueueItem(queue_id)
-      if ( item.cancelled ):
-        self.log_info("Queued item cancelled")
-        job_state = JobState.CANCELLED
-        break
-      time.sleep(30)
+    while( job_state == JobState.QUEUED or job_state == JobState.BUILDING ):
+      time.sleep(self.refresh_interval_seconds)
+      if ( job_state == JobState.QUEUED ):
+        self.log_info("Check queue")
+        item = self.getQueueItem(queue_id)
+        if ( item.cancelled ):
+          self.log_info("Queued item cancelled")
+          job_state = JobState.CANCELLED
+          break
+        if ( item.executable ):
+          print(f"Item has become executable: f{item.executable.url}")
+          job_number = item.executable.number
+          job_state = JobState.BUILDING
+        continue
+      if ( job_state == JobState.BUILDING ):
+        self.log_info("Job is building")
+        build = self.getJobBuild(job_name, job_number)
+        print(build)
+        continue
     
     return job_state
 
