@@ -111,7 +111,8 @@ class RestClient:
           url=json["queueItem"]["url"],
           buildable=json["queueItem"]["buildable"],
           id=json["queueItem"]["id"],
-          reason=json["queueItem"]["why"]
+          reason=json["queueItem"]["why"],
+          cancelled=json["queueItem"]["cancelled"]
         )
       )
     )
