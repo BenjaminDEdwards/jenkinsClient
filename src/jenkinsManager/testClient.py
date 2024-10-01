@@ -9,12 +9,13 @@ def main():
 
   job_name = "test"
   print("Running jankins job code")
-  jenkins_job = client.getJenkinsJob(job_name)
+  # jenkins_job = client.getJenkinsJob(job_name)
+  client.build("test")
 
-  if jenkins_job:
-    print (f"got jenkins job")
-  else:
-    print("fail")
+  # if jenkins_job:
+  #   print (f"got jenkins job")
+  # else:
+  #   print("fail")
 
 if __name__ == "__main__":
   main()

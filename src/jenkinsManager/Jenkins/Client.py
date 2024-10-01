@@ -40,6 +40,7 @@ class RestClient:
   username: str
   password: str
   base_url: str
+  log_info: Callable[[str], None] = lambda log_line: print(f"{log_line}")
 
   def buildWithParameters(self, job_name: str) -> Optional[str]:
     url = f"{self.base_url}/job/{job_name}/buildWithParameters"
@@ -104,8 +105,9 @@ class RestClient:
     if response.status_code == 200:
       return transform( response.json() )
    
-    print(f"Failed to make REST call to {url}. Status code: {response.status_code}")
+    self.log_info(f"Failed to make REST call to {url}. Status code: {response.status_code}")
     return None
 
 
-    
+  def build( self, job_name:str ) -> None:
+    self.log_info(f"Running build for job {job_name}")
