@@ -182,7 +182,7 @@ class RestClient:
     
     job_state = JobState.QUEUED
     self.log_info(f"Jenkins job queued at: {new.url} - {new.reason}")
-    self.log_info(f"Polling for updates every {self.refresh_interval_seconds}")
+    self.log_info(f"Polling for updates every {self.refresh_interval_seconds} seconds...")
     while( job_state == JobState.QUEUED or job_state == JobState.BUILDING ):
       time.sleep(self.refresh_interval_seconds)
       if ( job_state == JobState.QUEUED ):
