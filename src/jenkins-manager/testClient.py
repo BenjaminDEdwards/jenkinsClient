@@ -1,12 +1,32 @@
 import argparse
+import os
 from Jenkins.Client import RestClient
 
 def main( user_name: str, password: str, base_url: str, job_name: str):
-  client = RestClient(
-    username=user_name,
-    password=password,
-    base_url=base_url
-  )
+  build_run_timeout_seconds = os.getenv('JENKINS_BUILD_TIMEOUT_SECONDS')
+  http_timeout = os.getenv('JENKINS_HTTP_TIMEOUT_SECONDS')
+  refresh_interval = os.getenv('JENKINS_REFRESH_INTERVAL_SECONDS')
+  queue_retries = os.getenv('JENKINS_QUEUE_RETRIES')
+
+
+  # Initialize the RestClient parameters dictionary
+  client_params = {
+      'username': user_name,
+      'password': password,
+      'base_url': base_url
+  }
+
+  if build_run_timeout_seconds is not None:
+      client_params['build_run_timeout_seconds'] = int(build_run_timeout_seconds)
+  if http_timeout is not None:
+      client_params['http_timeout_seconds'] = int(http_timeout)
+  if refresh_interval is not None:
+      client_params['refresh_interval_seconds'] = int(http_timeout)
+  if queue_retries is not None:
+      client_params['queue_build_max_retries'] = int(queue_retries)
+
+  # Initialize the RestClient with the parameters
+  client = RestClient(**client_params)
 
   state = client.runJob(job_name)
 
@@ -26,5 +46,4 @@ if __name__ == "__main__":
   parser.add_argument('job_name', help='The name of the Jenkins job to run')
 
   args = parser.parse_args()
-
-  main(args.username, args.password, args['base_url'], args['job_name'])
+  main(args.username, args.password, args.base_url, args.job_name)

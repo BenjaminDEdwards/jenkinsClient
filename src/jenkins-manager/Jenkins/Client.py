@@ -73,8 +73,8 @@ class RestClient:
   password: str
   base_url: str
   log_info: Callable[[str], None] = lambda log_line: print(f"{log_line}")
-  max_retries: int = 5
-  timeout: int = 5
+  queue_build_max_retries: int = 5
+  queue_build_interval_seconds: int = 5
   refresh_interval_seconds: int = 30
   build_run_timeout_seconds: int = 300 # 5 minutes
   http_timeout_seconds: int = 10
@@ -178,7 +178,7 @@ class RestClient:
       self.log_info("Using existing queue item")
       return queueItem
 
-    remaining_tries = self.max_retries
+    remaining_tries = self.queue_build_max_retries
     while (queueItem == None and remaining_tries > 0):
       self.log_info(f"kicking off build for {job_name}")
       remaining_tries -= 1
@@ -190,7 +190,7 @@ class RestClient:
       if (queueItem):
         break
       self.log_info("Could not kick off a new build, will retry ( {remaining_tries} attempts remaining )")
-      time.sleep(self.timeout)
+      time.sleep(self.queue_build_interval_seconds)
 
     return queueItem
 
