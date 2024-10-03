@@ -2,7 +2,7 @@
 
 import argparse
 import os
-from Jenkins.Client import RestClient
+from jenkins_manager.Jenkins.Client import RestClient
 
 def main():
   parser = argparse.ArgumentParser(description='Run a Jenkins job via CLI.')
