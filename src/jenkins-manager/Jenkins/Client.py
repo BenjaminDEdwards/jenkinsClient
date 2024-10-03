@@ -194,13 +194,13 @@ class RestClient:
 
     return queueItem
 
-  def _runJobInternal(self, job_name: str) -> JobState:
+  def _runJobInternal(self, job_name: str) -> State:
     new = self.queueBuild(job_name)
     queue_id = new.id
     job_number = 0
 
     if not queue_id:
-      return JobState.FAILED
+      return JobState.FAILED.value
     
     job_state = JobState.QUEUED
     self.log_info(f"Jenkins job queued at: {new.url} - {new.reason}")
@@ -240,7 +240,7 @@ class RestClient:
     
     return job_state.value
 
-  def runJob(self, job_name: str) -> JobState:
+  def runJob(self, job_name: str) -> State:
     # Set up the timeout
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(self.build_run_timeout_seconds )  # Set the timeout for 5 minutees (600 seconds)
@@ -251,7 +251,7 @@ class RestClient:
     
     except TimeoutException:
       self.log_info("Job execution timed out after {self.build_run_timeout_seconds} seconds")
-      return JobState.TIMED_OUT
+      return JobState.TIMED_OUT.value
     finally:
       # Cancel the alarm if the job finishes before timeout
       signal.alarm(0)
