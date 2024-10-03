@@ -4,7 +4,17 @@ import argparse
 import os
 from Jenkins.Client import RestClient
 
-def main( user_name: str, password: str, base_url: str, job_name: str):
+def main():
+  parser = argparse.ArgumentParser(description='Run a Jenkins job via CLI.')
+
+  parser.add_argument('--username', required=True, help='Jenkins username')
+  parser.add_argument('--password', required=True, help='Jenkins password')
+  parser.add_argument('--base-url', required=True, help='Base URL of the Jenkins instance')
+  parser.add_argument('job_name', help='The name of the Jenkins job to run')
+
+  args = parser.parse_args()
+
+  job_name = args.job_name
   build_run_timeout_seconds = os.getenv('JENKINS_BUILD_TIMEOUT_SECONDS')
   http_timeout = os.getenv('JENKINS_HTTP_TIMEOUT_SECONDS')
   refresh_interval = os.getenv('JENKINS_REFRESH_INTERVAL_SECONDS')
@@ -13,9 +23,9 @@ def main( user_name: str, password: str, base_url: str, job_name: str):
 
   # Initialize the RestClient parameters dictionary
   client_params = {
-      'username': user_name,
-      'password': password,
-      'base_url': base_url
+      'username': args.username,
+      'password': args.password,
+      'base_url': args.base_url
   }
 
   if build_run_timeout_seconds is not None:
@@ -40,12 +50,4 @@ def main( user_name: str, password: str, base_url: str, job_name: str):
     exit(1)
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description='Run a Jenkins job via CLI.')
-
-  parser.add_argument('--username', required=True, help='Jenkins username')
-  parser.add_argument('--password', required=True, help='Jenkins password')
-  parser.add_argument('--base-url', required=True, help='Base URL of the Jenkins instance')
-  parser.add_argument('job_name', help='The name of the Jenkins job to run')
-
-  args = parser.parse_args()
-  main(args.username, args.password, args.base_url, args.job_name)
+  main()
