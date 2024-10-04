@@ -250,7 +250,7 @@ class RestClient:
       return self._runJobInternal(job_name)
     
     except TimeoutException:
-      self.log_info("Job execution timed out after {self.build_run_timeout_seconds} seconds")
+      self.log_info(f"Job execution timed out after {self.build_run_timeout_seconds} seconds")
       return JobState.TIMED_OUT.value
     finally:
       # Cancel the alarm if the job finishes before timeout
